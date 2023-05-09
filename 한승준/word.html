@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<title>단어게임</title>
+	<style>
+		* { box-sizing: border-box; }
+		html, body {
+			margin: 0;
+			width: 100%;
+			height: 100%;
+		}
+		#wordspace {
+			width: 100%;
+			height: 100%;
+			background-color: black;
+			color: white;
+			font-size: 1.5rem;
+			font-weight: bold;
+			padding: 0 50px;
+		}
+		footer {
+			position: fixed;
+			width: 100%;
+			left: 0;
+			bottom: 0;
+			height: 50px;
+			background-color: #333;
+			display: flex;
+			justify-content: center;
+			align-items: stretch;
+		}
+		footer > div {
+			flex: 1;
+			display: flex;
+			justify-content: center;
+		}
+		footer .btns { justify-content: start; }
+		footer .scorebox { 
+			justify-content: end; 
+			padding-right: 20px;
+			font-size: 1.3rem;
+			color: gold;
+			line-height: 50px;
+		}
+		footer .inputbox input {
+			width: 100%;
+			font-size: 1.3rem;
+		}
+		.word {
+			position: absolute;
+			top: 0;
+			color: white;
+		}
+		.heart {
+			display: inline-block;
+			width: 20px;
+			height: 20px;
+			color: rgb(251, 45, 45);
+			margin-right: 5px;
+		}
+
+		.heart:empty {
+		background-color: transparent;
+		}
+
+
+	</style>
+</head>
+<body>
+	<div id="wordspace"></div>
+	<footer>
+		<div class="btns">
+			<button id="start">Start</button>
+			<button id="stop">Stop</button>
+			<button id="clear">Clear</button>
+		</div>
+		<div class="inputbox">
+			<input type="text" id="typehere" autofocus>
+		</div>
+		<div class="scorebox">
+			<span class="heart">♥</span>
+			<span class="heart">♥</span>
+			<span class="heart">♥</span>
+			<span class="heart">♥</span>
+			<span class="heart">♥</span>
+			<span>Score: </span>
+			<span id="score">0</span>
+		</div>
+	</footer>
+	<script>
+        let wordSpeed = 4000; // 밀리세컨드
+        let dropSpeed = 10; // 픽셀
+        let score = 0;
+        let wordTimer = null;
+        let dropTimer = null;
+        let words = []; // 빈 배열
+
+        // 단어들을 가져다 배열에 추가하는 함수
+        const getWords = async () => {
+            const url = "https://assets.codepen.io/147406/words.json";
+            const res = await fetch(url);
+            const data = await res.json();
+            return data;
+        }
+        getWords().then((data) => {
+            const json = data.words;
+            json.forEach((w) => {
+                words.push(w);                
+            });
+        });
+
+        let start = document.querySelector("#start");
+        let stop = document.querySelector("#stop");
+        let clear = document.querySelector("#clear");
+        let typehere = document.querySelector("#typehere");
+        let wordspace = document.querySelector("#wordspace");
+        let spanScore = document.querySelector("#spanScore");
+
+        const showWord = async () => {
+            if (words.length === 0) {
+                stop.click();
+                return;
+            }
+
+            // 단어 배열(words) 랜덤 정렬
+            words.sort(() => Math.random() - 0.5); // 랜덤정렬
+            const word = words.pop(); // words에서 하나 꺼내기
+            let span = document.createElement("span");
+            span.classList.add("word");
+            span.style.top = 0;
+            span.innerText = word;
+            let x = Math.floor(((window.innerWidth - 200) - 200) * Math.random() + 200);
+            span.style.left = x + "px";
+            wordspace.appendChild(span);
+        }
+
+		var hearts = document.querySelectorAll('.heart');
+
+		var sum = 0;
+        const moveWords = () => {
+            const spans = document.getElementsByClassName("word");
+            for (let i = 0; i < spans.length; i++) {
+                let s = spans[i];
+                let top = s.style.top; // 현재 span의 top좌표(문자열)
+                top = parseInt(top, 10);
+                let newtop = (top + dropSpeed) + "px";
+                s.style.top = newtop;
+				
+				var rect = s.getBoundingClientRect();
+
+				console.log(rect.bottom);
+				if (rect.bottom >= window.innerHeight - 50) {
+					s.remove();
+					hearts[hearts.length - 1].remove();
+					hearts = document.querySelectorAll('.heart');
+					if (hearts.length == 0) {
+						alert("죽음!");
+						clear.click();
+					}
+				}
+            }
+
+        }
+
+        start.addEventListener("click", () => {
+            showWord();
+            wordtimer = setInterval(() => {showWord();}, wordSpeed);
+            dropTimer = setInterval(() => {moveWords();}, 1000);
+        });
+        stop.addEventListener("click", () => {
+            clearInterval(wordTimer);
+            clearInterval(dropTimer);
+        });
+		clear.addEventListener("click", () => {
+			stop.click();
+			wordspace.innerHTML = "";
+			score = 0;
+			wordSpeed = 4000;
+			dropSpeed = 10;
+			document.querySelector("#score").innerText = 0;
+		});
+
+		typehere.addEventListener("keyup", (e) => {
+			if (e.keyCode === 13) {
+				let spans = document.getElementsByClassName("word");
+				for (let i = 0; i < spans.length; i++) {
+					let s = spans[i];
+					let w = s.innerText;
+					if (w === e.target.value) {
+						s.remove();
+						score++;
+						document.querySelector("#score").innerText = score;
+						if (score % 10 === 0) {
+							wordSpeed = wordSpeed * 0.5;
+							dropSpeed = dropSpeed * 2;
+							stop.click();
+							start.click();
+						}
+					}
+					if (s.style.top >= window.innerHeight - 50) {
+						s.remove();
+					}
+				}
+				e.target.value = "";
+			}
+		});
+	</script>
+</body>
+</html>

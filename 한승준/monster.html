@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Monster GAME</title>
+    <style>
+        canvas {
+            border: 1px solid #111;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        let canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 480;
+        document.body.appendChild(canvas);
+
+        let ctx = canvas.getContext("2d");
+        let bg = new Image();
+        bg.src = "images/background.png";
+        let hero = new Image();
+        hero.src = "images/hero.png";
+        let monster = new Image();
+        monster.src = "images/monster.png";
+
+        bgReady = false;
+        bg.onload = function() {
+            bgReady = true;
+        }
+
+        heroReady = false;
+        hero.onload = function() {
+            heroReady = true;
+        }
+
+        monsterReady = false;
+        monster.onload = function() {
+            monsterReady = true;
+        }
+
+        let h = {speed: 4}; // 히어로 속성(Speed, XHook, YHook)
+        let m = {}; // 몬스터 속성(XHook, YHook)
+        let c = 0; // 잡힌 몬스터 개수
+
+        // 히어로, 몬스터 좌표 초기화
+        function start() {
+            h.x = (canvas.width/2) - 16;
+            h.y = (canvas.height/2) - 16;
+
+            m.x = Math.random() * (canvas.width - 64);
+            m.y = Math.random() * (canvas.height - 64);
+
+
+        }
+
+        function reset() {
+            m.x = Math.random() * (canvas.width - 64);
+            m.y = Math.random() * (canvas.height - 64);
+        }
+
+        // 그리기 함수
+        function draw() {
+            if (bgReady) ctx.drawImage(bg, 0, 0);
+            if (heroReady) ctx.drawImage(hero, h.x, h.y);
+            if (monsterReady) ctx.drawImage(monster, m.x, m.y);
+            ctx.fillStyle = "white";
+            ctx.font = "24px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+            ctx.fillText("Monster caught: " + c, 32, 32);
+        }
+        // draw();
+
+        // 반복될 게임 함수
+        function game() {
+            update();
+            draw();
+            requestAnimationFrame(game); // 계속 반복시키는 함수 (모니터 hz 기준으로 반복)
+        }
+
+		let keyDown = {};
+		addEventListener("keydown", function(event){
+			keyDown[event.keyCode] = true;
+		});
+		addEventListener("keyup", function(event){
+			delete keyDown[event.keyCode];
+		});
+
+		// 화면을 계속 업데이트(키다운 감지)
+		function update() {
+			if(37 in keyDown && 32 < h.x) { // 왼쪽 화살표
+                h.x = h.x - h.speed;
+			}
+			if(38 in keyDown && 32 < h.y) { // 위쪽 화살표
+				h.y = h.y - h.speed;
+			}
+			if(39 in keyDown && canvas.width - 64 > h.x) { // 오른쪽 화살표
+				h.x = h.x + h.speed;
+			}
+			if(40 in keyDown && canvas.height - 64 > h.y) { // 아래쪽 화살표
+				h.y = h.y + h.speed;
+			}
+            if (h.x <= m.x + 32 && m.x <= h.x + 32 && h.y <= m.y + 32 && m.y <= h.y + 32) {
+                c++ // c = c + 1
+                reset();
+            } 
+		}
+
+        start();
+        game();
+        reset(); 
+    </script>
+</body>
+</html>
