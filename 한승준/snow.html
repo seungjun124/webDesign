@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #container {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var width = $("#container").innerWidth();
+            var height = $("#container").innerHeight();
+
+            var list = [];
+
+            setInterval(() => {
+                var newSpan = $('<span>').css('position', 'absolute'); // 새로운 newSpan 생성
+
+                var newImage = $('<img>').attr('src', 'images/snowflake.png').css('width', '100px'); // 이미지 요소 생성 및 속성 설정
+
+                newSpan.append(newImage); // 이미지를 newSpan에 추가
+
+                let randomWidth = Math.floor(Math.random() * width) + 1;
+                newSpan.css({
+                    'left': randomWidth + 'px',
+                });
+                $('#container').append(newSpan);
+                list.push(newSpan);
+                for (let i = 0; i < list.length; i++) {   
+                    let $s = $(list[i]);
+                    let top = $s.css('top');
+                    let newTop = parseInt(top) + 30;
+                    $s.css('top', newTop + 'px');
+                    
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

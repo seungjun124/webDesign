@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="game-canvas" width="400" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("game-canvas");
+        const ctx = canvas.getContext("2d");
+
+        window.onload = () => {
+            document.addEventListener("keydown", keyPush);
+
+            setInterval(game, 1000 / 15);
+
+            let positionX = 0, positionY = 0;
+            const gridSize = 20, tileCount = 20;
+
+            let velocityX = 0, velocityY = 0; // 방향을 지정하는 변수
+
+            let appleX = 15, appleY = 15; // 먹이 좌표
+
+            const trail = []; // 뱀이 상하좌우로 움직일 때 이전의 위치들을 추적
+            let tailLength = 1; // 뱀 몸통 개수
+
+            // 키보드 함수 구현
+            function keyPush(evt) {
+                switch (evt.keyCode) {
+                    case 37:
+                        velocityX = -1;
+                        velocityY = 0;
+                        break;
+                    case 38:
+                        velocityX = 0;
+                        velocityY = -1;
+                        break;
+                    case 39:
+                        velocityX = 1;
+                        velocityY = 0;
+                        break;
+                    case 40:
+                        velocityX = 0;
+                        velocityY = 1;
+                        break;
+                }
+            }
+
+            function game() {
+                // 배경을 그린다.
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // 뱀을 그린다. 기록이 남은 리스트의 좌표 값에 그리는 소스
+                ctx.fillStyle = "lime";
+                for (let i = 0; i < trail.length; i++) {
+                    ctx.fillRect(trail[i].x * gridSize, trail[i].y * gridSize, gridSize - 2, gridSize - 2);
+                    
+                    // 리스트에 있는 좌표와 뱀의 좌표가 같아지면 처음부터 다시시작
+                    if (trail[i].x === positionX && trail[i].y === positionY) {
+                        tail = 5;
+                    }
+                }
+
+                // 사과를 그린다.
+                ctx.fillStyle = "red"
+                ctx.fillRect(appleX * gridSize, appleY * gridSize, gridSize - 2, gridSize - 2);
+                
+                positionX += velocityX;
+                positionY += velocityY;
+
+                // tileCount 값의 범위를 벗어나면 실행이 되는 함수
+                if (positionX < 0) {
+                    positionX = tileCount - 1
+                }
+                if (positionX > tileCount - 1) {
+                    positionX = 0
+                }
+                if (positionY < 0) {
+                    positionY = tileCount - 1
+                }
+                if (positionY > tileCount - 1) {
+                    positionY = 0
+                }
+
+                // 사과와 뱀의 좌표가 같아지면 tileCount 기준의 랜덤 좌표로 사과 좌표를 이동시킨다.
+                if (appleX === positionX && appleY === positionY) {
+                    tailLength++; // 사과를 먹었을때 뱀의 꼬리를 추가
+                    appleX = Math.floor(Math.random() * tileCount);
+                    appleY = Math.floor(Math.random() * tileCount);
+                }
+
+                // 뱀의 위치를 배열에 추가시킨다.
+                trail.push({
+                    x: positionX,
+                    y: positionY
+                });
+
+                while(trail.length > tailLength) {
+                    trail.shift(); // shift 배열의 맨 앞에 값을 제거한다.
+                }
+            }
+        }
+    </script>
+</body>
+</html>

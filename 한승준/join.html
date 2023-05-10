@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>join page</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('form').submit(function(event) {
+                event.preventDefault(); 
+
+                var name = $('input[name="name"]').val();
+                var email = $('input[name="email"]').val();
+                var pw = $('input[name="pw"]').val();
+
+                // 필드 유효성 검사
+                if (name === '' || email === '' || pw === '') {
+                    alert('입력 필드를 모두 채워주세요.');
+                    return;
+                }
+
+                $('form').off('submit').submit();
+            });
+        });
+    </script>
+</head>
+<body>
+    <form action="" method="post">
+        <input type="text" name="name" placeholder="이름"><br>
+        <input type="email" name="email" placeholder="이메일"><br>
+        <input type="password" name="pw" placeholder="비밀번호"><br>
+        <input type="submit" value="회원가입">
+    </form>
+</body>
+</html>
