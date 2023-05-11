@@ -1,0 +1,1 @@
+INSERT INTO `todo` (`id`, `todo`, `complete`) VALUES (NULL, 'PHP 배우기', '0'), (NULL, 'React 배우기', '0'), (NULL, '집안일 하기', '0'), (NULL, '운전허 따기', '0');
