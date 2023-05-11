@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>날씨 정보</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e1f5fe;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #2196f3;
+        }
+
+        .weather-search {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #city {
+            padding: 5px;
+            width: 200px;
+            font-size: 16px;
+        }
+
+        #fetch-weather {
+            padding: 5px 10px;
+            font-size: 16px;
+            background-color: #2196f3;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #fetch-weather:hover {
+            background-color: #0c7cd5;
+        }
+
+        .weather-card {
+            margin-top: 20px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #location {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #2196f3;
+        }
+
+        #weather-icon {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 10px;
+        }
+
+        #description {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .weather-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .weather-info p {
+            margin: 0;
+            color: #555;
+        }
+
+        .weather-info span {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="weather-search">
+            <h1>날씨 검색</h1>
+            <input type="text" id="city" placeholder="도시를 입력하세요">
+            <button id="fetch-weather">날씨 정보 가져오기</button>
+        </div>
+        <div id="weather-container" style="display: none;">
+            <div class="weather-card">
+                <h2 id="location" style="text-align: center;"></h2>
+                <div style="text-align: center;">
+                    <img id="weather-icon" src="" alt="Weather Icon" style="width: 100px; height: 100px;">
+                </div>
+                <div class="weather-info">
+                    <p>온도: <span id="temperature"></span></p>
+                    <p>체감 온도: <span id="feels-like"></span></p>
+                </div>
+                <div class="weather-info">
+                    <p>최저 온도: <span id="min-temp"></span></p>
+                    <p>최고 온도: <span id="max-temp"></span></p>
+                </div>
+                <div class="weather-info">
+                    <p>습도: <span id="humidity"></span></p>
+                    <p>풍속: <span id="wind-speed"></span></p>
+                </div>
+                <div class="weather-info">
+                    <p>기압: <span id="pressure"></span></p>
+                    <p>가시성: <span id="visibility"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script>
+            $(document).ready(function() {
+                $("#fetch-weather").click(function() {
+                    var city = $("#city").val();
+                    var token = "01c3af2209ce9aaaf4c7a8eb860ac3c9";
+                    var translationAPI = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=en&dt=t&q=" + city;
+
+                    $.ajax({
+                        url: translationAPI,
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(response) {
+                            var translatedCity = response[0][0][0];
+                            var apiURL = "http://api.openweathermap.org/data/2.5/weather?q=" + translatedCity + "&APPID=" + token;
+
+                            $.getJSON(apiURL, function(weatherData) {
+                                var weatherIcon = "http://openweathermap.org/img/wn/" + weatherData.weather[0].icon + ".png";
+
+                                $("#location").text(city); // Display input city in the location
+                                $("#description").text(weatherData.weather[0].description);
+                                $("#temperature").text((weatherData.main.temp - 273.15).toFixed(2) + "℃");
+                                $("#feels-like").text((weatherData.main.feels_like - 273.15).toFixed(2) + "℃");
+                                $("#min-temp").text((weatherData.main.temp_min - 273.15).toFixed(2) + "℃");
+                                $("#max-temp").text((weatherData.main.temp_max - 273.15).toFixed(2) + "℃");
+                                $("#humidity").text(weatherData.main.humidity + "%");
+                                $("#wind-speed").text(weatherData.wind.speed + "m/s");
+                                $("#pressure").text(weatherData.main.pressure + "hPa");
+                                $("#visibility").text(weatherData.visibility + "m");
+                                $("#weather-icon").attr("src", weatherIcon);
+
+                                $("#weather-container").show();
+                            });
+                        },
+                        
+                        error: function() {
+                            alert("번역에 실패하였습니다. 영어로 다시 시도해주세요.");
+                        }
+                    });
+                });
+
+                $("#city").keypress(function(event) {
+                    if (event.keyCode === 13) {
+                        $("#fetch-weather").click();
+                    }
+                });
+            });
+
+      </script>
+</body>
+</html>
