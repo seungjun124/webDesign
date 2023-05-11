@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>카드게임</title>
+	<style>
+		body { background: #eee; }
+
+		#cards {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 1151px;
+			margin: 0 auto;
+			padding: 20px;
+			border: 5px solid #FF5733;
+			text-align: center;
+			box-shadow: 2px 2px 8px #03446A;
+			display: none;
+		}
+
+		.card {
+			width: 110px;
+			height: 130px;
+			display: inline-block;
+			perspective: 500px;
+		}
+
+		.content {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			box-shadow: 0 0 15px rgba(0,0,0,0.1);
+			transition: transform 1s;
+			transform-style: preserve-3d;
+		}
+
+		.front, .back {
+			position: absolute;
+			height: 100%;
+			width: 100%;
+			background: white;
+			line-height: 130px;
+			color: #03446A;
+			text-align: center;
+			font-size: 15px;
+			border-radius: 5px;
+			backface-visibility: hidden;
+		}
+
+		.back {
+			background: #03446A;
+			color: white;
+			transform: rotateY( 180deg );
+			background-size: 100% 100%;
+		}
+
+		#modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0,0,0,0.8);
+			z-index: 1;
+		}
+		#modal button {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			padding: 20px;
+			border: 5px solid #FF5733;
+			font-weight: 700;
+			font-size: 30px;
+		}
+		#topbox {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: auto;
+			display: none;
+		}
+		#topbox #score-box, #topbox #time-box {
+			position: absolute;
+			top: 10px;
+			font-size: 20px;
+			font-weight: 700;
+		}
+		#topbox #score-box { left: 20px; }
+		#topbox #time-box { right: 20px; }
+</style>
+</head>
+<body>
+	<!-- jQuery 없이 카드게임하기, 시간제한, 점수, 시작버튼, 재시작 버튼 등 추가 -->
+	<div id="cards"></div>
+	<div id="modal">
+		<button id="btn-action" onclick="init()">게임시작</button>
+	</div>
+	<div id="topbox">
+		<div id="score-box">득점 : <span id="score">0</span></div>
+		<div id="time-box">남은시간 : <span id="time">300</span>초</div>
+	</div>
+		<script>
+		let gameseconds = 300; //제한시간
+		let score = 0; //득점
+		let firstId = ""; //첫 번째 클릭한 카드의 id
+		let secondId = ""; //두 번째 클릭한 카드의 id
+		let firstNo = 0; //첫 번째 클릭한 카드의 번호(1~20)
+		let secondNo = 0; //두 번째 클릭한 카드의 번호(1~20)
+		let timer = null; //매 1초마다 시간을 1씩 빼주기 위한 타이머 초기 선언, 처음에는 null로 빈 변수 선언
+		let cardnums = []; //빈 배열 추가
+		//배열 cardnums에 1~20까지의 숫자를 두 번씩 할당함(예, 1,1,2,2....20,20)
+		for(i=1;i<=20;i++) {
+			cardnums.push(i);
+			cardnums.push(i);
+		}
+
+		//카드를 클릭하면 호출하는 함수
+		function cardClick(card) {
+			let isopen = card.dataset.open; //카드에 추가된 data-open 값을 가져움("true"|"false")
+			if( isopen == "true" ) return; //이미 열려진 카드를 클릭하면 다음 코드 중단
+			//카드 하위에 있는 class가 content인 요소의 회전 조정
+			card.querySelector('.content').style.transform = "rotateY( 180deg )";
+			let myid = card.id; //변수 myid에 클릭된 카드의 id를 할당
+			let myno = card.dataset.no; //변수 myno에 클릭된 카드의 data-no 값을 할당
+			if( firstId == "" ) {
+				//firstId 변수가 비어 있으면 첫 번째 카드이므로 myid와 myno의 값을 firstId, firstNo에 할당
+				firstId = myid;
+				firstNo = myno;
+				//열린 카드이므로 firstId를 갖는 카드의 data-opne 값을 "true"로 설정
+				document.getElementById(firstId).dataset.open = "true";
+			} else {
+				//firstId의 값이 비어있지 않다면 두 번째 카드이므로 값을 할당하고 data-open을 "true"로 설정
+				secondId = myid;
+				secondNo = myno;
+				document.getElementById(secondId).dataset.open = "true";
+
+				//만약 firstNo와 secondNo의 값이 다르다면, 동일한 동물 카드가 아니므로 다시 뒤집어 줘야 함
+				if( firstNo != secondNo ) {
+					//setTimeout에서 firstId와 secondId 값을 참조하려면 아래와 같이 함수로 감싸고 값을 전달해야 함. 
+					//1초 후에 unFlip(firstId,secondId)이 실행되도록 설정(열린 카드를 다시 뒤집어 닫게 함)
+					(function(firstId,secondId){
+						setTimeout(function(){ 
+							unFlip(firstId,secondId); 
+						}, 1000);
+					})(firstId,secondId);
+
+				} else {
+					//firstNo와 secondNo의 다르지 않다면, 즉 값이 같다면 동일한 카드이므로 score에 5를 더하고
+					//score를 화면에 표시하고
+					//100점 이상이면 축하메시지를 stopGame에 전송함(화면을 정지하고 다시 시작 버튼 표시)
+					score += 5;
+					document.getElementById("score").innerHTML = score;
+					if( score >= 100 ) stopGame("축하합니다.<br>다시 시작");
+				}
+				//secondId 즉 두 번째 카드가 열리면 바로 firstId와 firstNo, secondId와 secondNo 값을 초기화
+				//두 번째가 열렸다는 것은 같거나 다르거나 둘 중의 하나이므로 바로 초기화 필요
+				firstId = "";
+				firstNo = 0;
+				secondId = "";
+				secondNo = 0;
+			}
+		}
+
+		// 첫 번째와 두 번째 카드의 data-no가 다른 경우 1초 후에 호출하는 함수
+		// 각 카드의 data-open을 "false"로 설정하고
+		// 카드를 다시 원래대로 뒤집는다
+		function unFlip(firstId,secondId) {
+			let first = document.getElementById(firstId);
+			let second = document.getElementById(secondId);
+			first.dataset['open'] = "false";
+			second.dataset['open'] = "false";
+			let firstContent = first.querySelector('.content');
+			let secondContent = second.querySelector('.content');
+			firstContent.style.transform = "rotateY(0deg)";
+			secondContent.style.transform = "rotateY(0deg)";
+		}
+
+		// 게임시작 버튼을 누르면 실행되는 함수
+		// id가 cards인 요소 안에 개별 카드들을 20개 추가한다. 
+		function init() {
+			// 만일 타이머가 실행되고 있다면 중지하고 null로 초기화 한다.
+			if( timer != null) {
+				clearInterval(timer);
+				timer = null;
+			}
+			document.getElementById("cards").innerHTML = ""; //id가 cards인 요소의 내용을 비움다
+			cardnums.sort( () => Math.random() - 0.5 ); //배열 cardnums의 요소들을 랜덤 정렬한다.
+			//카드 수만큼(0~(카드갯수-1)) 1씩 증가시키며 i를 반복한다.
+			for(i=0;i<cardnums.length;i++) {
+				let id = i + 1; //i가 0부터 시작했으므로 id 값은 i+1로 해준다. 
+				let card = `
+				<div class="card" id="card-${id}" data-no="${cardnums[i]}" data-open="false" onclick="cardClick(this)">
+					<div class="content" id="content-${id}">
+						<div class="front">
+							클릭하세요!
+						</div>
+						<div class="back" style="background-image:url(images/${cardnums[i]}.jpg)"></div>
+					</div>
+				</div>
+				`;
+				document.getElementById("cards").innerHTML += card; //id가 cards인 요소의 내용에 계속 card를 추가
+			}
+			document.getElementById("modal").style.display = "none"; //모달창(검정 반투명)을 감춘다
+			document.getElementById("topbox").style.display = "block"; //상단의 점수 및 시간 표시 박스를 표시
+			document.getElementById("cards").style.display = "block"; //cards 요소를 표시
+			gameseconds = 300; //시작 시에 점수를 300으로 초기화 한다. 
+
+			//매 1초마다 작동하는 timer를 생성한다.
+			timer = setInterval(() => {
+				gameseconds--; //초를 1씩 뺀다. 
+				document.getElementById("time").innerHTML = gameseconds;
+				//사간이 0이 되면 stopGame 함수를 메시지와 함께 호출한다. 
+				if( gameseconds == 0 ) stopGame("게임시간이 초과되었습니다.<br>다시 시작하려면 클릭하세요.");
+			}, 1000);
+		}
+
+		//시간 초과 또는 100점에 도달했을 때 실행되는 함수
+		function stopGame(msg) {
+			//타이머 초기화
+			if( timer != null) {
+				clearInterval(timer);
+				timer = null;
+			}
+			//버튼에 메시지 표시(msg)
+			document.getElementById("btn-action").innerHTML = msg;
+			//모달 창 표시(모달 창 안의 버튼 클릭하면 init() 함수 실행됨)
+			document.getElementById("modal").style.display = "block";
+		}
+
+	</script>
+
+</body>
+</html>
